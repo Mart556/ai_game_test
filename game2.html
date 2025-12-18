@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="et">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>HTML & CSS Viktoriin</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--bg-color: #f0f4f8;
+				--accent-pastel: #d1e9ff;
+				--primary-soft: #a2d2ff;
+				--secondary-soft: #ffafbd;
+				--text-color: #444;
+				--success: #caffbf;
+				--error: #ffadad;
+			}
+
+			body,
+			html {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				font-family: "Poppins", sans-serif;
+				background-color: var(--bg-color);
+				overflow: hidden;
+				color: var(--text-color);
+			}
+
+			/* Animeeritud taust */
+			.background-shapes {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				z-index: -1;
+				overflow: hidden;
+			}
+
+			.shape {
+				position: absolute;
+				opacity: 0.5;
+				animation: float 20s infinite linear;
+			}
+
+			@keyframes float {
+				0% {
+					transform: translateY(0) rotate(0deg);
+				}
+				100% {
+					transform: translateY(-100vh) rotate(360deg);
+				}
+			}
+
+			/* Mobiili vaade */
+			.quiz-container {
+				width: 90%;
+				max-width: 400px;
+				height: 80vh;
+				background: white;
+				margin: 5vh auto;
+				border-radius: 30px;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+				display: flex;
+				flex-direction: column;
+				position: relative;
+				overflow: hidden;
+				border: 8px solid #333; /* Mobiili raam */
+			}
+
+			/* Protsessi kaart */
+			.progress-map {
+				padding: 15px;
+				display: flex;
+				justify-content: space-around;
+				background: #fafafa;
+				border-bottom: 1px solid #eee;
+				font-size: 0.7rem;
+				text-align: center;
+			}
+
+			.step {
+				opacity: 0.3;
+				transition: 0.3s;
+			}
+			.step.active {
+				opacity: 1;
+				font-weight: bold;
+				color: #5dade2;
+			}
+
+			/* Sisu ala */
+			.content {
+				flex: 1;
+				padding: 20px;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				overflow-y: auto;
+			}
+
+			.level-badge {
+				align-self: center;
+				padding: 5px 15px;
+				background: var(--primary-soft);
+				border-radius: 20px;
+				font-size: 0.8rem;
+				margin-bottom: 10px;
+			}
+
+			.question-text {
+				font-size: 1.1rem;
+				font-weight: 600;
+				text-align: center;
+				margin-bottom: 20px;
+			}
+
+			/* Vastuste nupud */
+			.options-grid {
+				display: grid;
+				gap: 10px;
+			}
+
+			.option-btn {
+				background: #fff;
+				border: 2px solid #eee;
+				padding: 12px;
+				border-radius: 12px;
+				cursor: pointer;
+				transition: 0.2s;
+				text-align: left;
+				font-size: 0.9rem;
+			}
+
+			.option-btn:hover {
+				background: var(--bg-color);
+			}
+			.option-btn.selected {
+				border-color: var(--primary-soft);
+				background: var(--accent-pastel);
+			}
+			.option-btn.correct {
+				background: var(--success);
+				border-color: #98ee99;
+			}
+			.option-btn.wrong {
+				background: var(--error);
+				border-color: #ff8b8b;
+			}
+
+			/* Selgitus */
+			.explanation {
+				margin-top: 15px;
+				font-size: 0.85rem;
+				padding: 10px;
+				border-radius: 10px;
+				display: none;
+				background: #f9f9f9;
+			}
+
+			/* Juhtnupud */
+			.controls {
+				padding: 20px;
+				display: flex;
+				gap: 10px;
+				border-top: 1px solid #eee;
+			}
+
+			button.main-btn {
+				flex: 1;
+				padding: 12px;
+				border: none;
+				border-radius: 10px;
+				cursor: pointer;
+				font-weight: bold;
+				transition: 0.3s;
+			}
+
+			.confirm-btn {
+				background: var(--primary-soft);
+				color: white;
+			}
+			.next-btn {
+				background: #eee;
+				display: none;
+			}
+			.cancel-btn {
+				background: transparent;
+				color: #aaa;
+				font-size: 0.7rem;
+			}
+
+			/* Lõpuekraan */
+			#end-screen {
+				display: none;
+				text-align: center;
+				padding: 40px 20px;
+			}
+
+			.confetti {
+				position: absolute;
+				font-size: 20px;
+				animation: rain 3s linear infinite;
+			}
+
+			@keyframes rain {
+				0% {
+					transform: translateY(-20px);
+				}
+				100% {
+					transform: translateY(500px);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="background-shapes" id="bgShapes"></div>
+
+		<div class="quiz-container">
+			<div class="progress-map" id="progressMap">
+				<div class="step active" id="step1">📝 Visand</div>
+				<div class="step" id="step2">📐 Wireframe</div>
+				<div class="step" id="step3">📱 Prototüüp</div>
+			</div>
+
+			<div id="game-area">
+				<div class="content">
+					<div class="level-badge" id="levelBadge">Tase: Algaja</div>
+					<div class="question-text" id="questionText">Laadimine...</div>
+
+					<div class="options-grid" id="optionsGrid"></div>
+
+					<div class="explanation" id="explanationText"></div>
+				</div>
+
+				<div class="controls">
+					<button class="cancel-btn" onclick="resetGame()">Katkesta</button>
+					<button
+						class="main-btn confirm-btn"
+						id="confirmBtn"
+						onclick="confirmAnswer()"
+					>
+						Kinnita
+					</button>
+					<button
+						class="main-btn next-btn"
+						id="nextBtn"
+						onclick="loadQuestion()"
+					>
+						Edasi
+					</button>
+				</div>
+			</div>
+
+			<div id="end-screen">
+				<h2 id="endTitle">Vinge töö!</h2>
+				<div id="badgeArea" style="font-size: 4rem; margin: 20px 0"></div>
+				<p id="scoreSummary"></p>
+				<button class="main-btn confirm-btn" onclick="resetGame()">
+					Alusta uuesti
+				</button>
+			</div>
+		</div>
+
+		<script>
+			const questions = [
+				// ALGATASE (1-5)
+				{
+					level: 1,
+					q: "Mida tähendab HTML lühend?",
+					options: [
+						"HyperText Markup Language",
+						"High Tech Modern Language",
+						"Hyperlink and Text Management",
+						"Home Tool Markup Language",
+					],
+					correct: 0,
+					exp: "HTML on standardne märgistuskeel veebilehtede struktuuri loomiseks.",
+				},
+				{
+					level: 1,
+					q: "Milline on korrektne pealkirja märgend (kõige olulisem)?",
+					options: ["<head>", "<h6>", "<h1>", "<header>"],
+					correct: 2,
+					exp: "h1 tähistab lehe peamist pealkirja, h2-h6 on alapealkirjad.",
+				},
+				{
+					level: 1,
+					q: "Kuidas lisatakse CSS-is taustavärv?",
+					options: [
+						"color: white;",
+						"background-color: blue;",
+						"bgcolor: blue;",
+						"fill: blue;",
+					],
+					correct: 1,
+					exp: "background-color määrab elemendi tausta, color määrab teksti värvi.",
+				},
+				{
+					level: 1,
+					q: "Millist atribuuti kasutatakse lingi sihtkoha määramiseks?",
+					options: ["src", "link", "href", "path"],
+					correct: 2,
+					exp: "href tähendab 'Hypertext Reference'.",
+				},
+				{
+					level: 1,
+					q: "Kuidas suletakse HTML-is lõigu (paragraph) märgend?",
+					options: ["</p>", "<p/>", "<close p>", "/p"],
+					correct: 0,
+					exp: "Enamik HTML märgendeid suletakse kaldkriipsuga märgi nime ees.",
+				},
+
+				// EDASIJÕUDNU (6-10)
+				{
+					level: 2,
+					q: "Mis on Flexboxi 'justify-content' eesmärk?",
+					options: [
+						"Elementide joondamine vertikaalselt",
+						"Elementide vaheline ruum ja horisontaalne joondus",
+						"Teksti joondamine elemendi sees",
+						"Elementide järjekorra muutmine",
+					],
+					correct: 1,
+					exp: "Justify-content joondab elemendid piki peatelge (tavaliselt horisontaalselt).",
+				},
+				{
+					level: 2,
+					q: "Mille poolest erinevad 'padding' ja 'margin'?",
+					options: [
+						"Padding on siseäär ja margin on välisäär",
+						"Margin on siseäär ja padding on välisäär",
+						"Mõlemad on täpselt samad asjad",
+						"Padding kehtib ainult tekstile",
+					],
+					correct: 0,
+					exp: "Padding tekitab ruumi sissepoole raami, margin väljapoole raami.",
+				},
+				{
+					level: 2,
+					q: "Kuidas valida CSS-is kõiki <p> elemente, mille klass on 'info'?",
+					options: ["p #info", "p.info", "p info", ".p-info"],
+					correct: 1,
+					exp: "Punkt (.) tähistab klassi valijat.",
+				},
+				{
+					level: 2,
+					q: "Milline CSS omadus muudab elemendi Grid-konteineriks?",
+					options: [
+						"display: flex;",
+						"display: block;",
+						"display: grid;",
+						"grid-template: active;",
+					],
+					correct: 2,
+					exp: "Display: grid aktiveerib Grid-süsteemi.",
+				},
+				{
+					level: 2,
+					q: "Millist väärtust kasutatakse 'position' omadusel, et element liiguks koos ekraaniga?",
+					options: ["absolute", "relative", "fixed", "static"],
+					correct: 2,
+					exp: "Fixed positsioon lukustab elemendi vaateakna (viewport) suhtes.",
+				},
+
+				// EKSPERT (11-15)
+				{
+					level: 3,
+					q: "Mis on SASS/SCSS peamine eelis?",
+					options: [
+						"See on kiirem kui puhas CSS",
+						"Võimaldab kasutada muutujaid ja pesastamist",
+						"See ei vaja brauseris tõlkimist",
+						"See asendab HTML-i",
+					],
+					correct: 1,
+					exp: "SASS on CSS-i eelprotsessor, mis lisab programmeerimisloogikat.",
+				},
+				{
+					level: 3,
+					q: "Kuidas kirjutatakse CSS-is media query mobiilivaate jaoks (max-width)?",
+					options: [
+						"@screen (max-width: 600px)",
+						"@media max-width: 600px",
+						"@media (max-width: 600px)",
+						"if screen and 600px",
+					],
+					correct: 2,
+					exp: "Media query vajab sulge ja @media märksõna.",
+				},
+				{
+					level: 3,
+					q: "Mis on Bootstrap?",
+					options: [
+						"Programmeerimiskeel",
+						"CSS raamistik valmis komponentidega",
+						"Andmebaasi tarkvara",
+						"Brauseri laiendus",
+					],
+					correct: 1,
+					exp: "Bootstrap on populaarseim CSS raamistik kiireks arenduseks.",
+				},
+				{
+					level: 3,
+					q: "Mida tähendab CSS-i 'specificity' (spetsiifilisus)?",
+					options: [
+						"Koodi kirjutamise kiirus",
+						"Reegel, mis määrab, milline stiil jääb peale",
+						"Faili suurus",
+						"Värvide täpsus",
+					],
+					correct: 1,
+					exp: "ID-valija on spetsiifilisem kui klass, mis on spetsiifilisem kui elemendi valija.",
+				},
+				{
+					level: 3,
+					q: "Kuidas tähistatakse SASS-is muutujat?",
+					options: ["var-nimi", "--nimi", "$nimi", "@nimi"],
+					correct: 2,
+					exp: "SASS kasutab muutujate jaoks dollarimärki ($).",
+				},
+			];
+
+			let currentIdx = 0;
+			let score = 0;
+			let wrongAnswers = 0;
+			let selectedOption = null;
+
+			function init() {
+				createShapes();
+				loadQuestion();
+			}
+
+			function createShapes() {
+				const shapes = ["<div>", "{ }", "CSS", "HTML", "</div>", "★"];
+				const container = document.getElementById("bgShapes");
+				for (let i = 0; i < 15; i++) {
+					const div = document.createElement("div");
+					div.className = "shape";
+					div.innerText = shapes[Math.floor(Math.random() * shapes.length)];
+					div.style.left = Math.random() * 100 + "vw";
+					div.style.top = Math.random() * 100 + "vh";
+					div.style.fontSize = Math.random() * 20 + 10 + "px";
+					div.style.animationDuration = Math.random() * 10 + 10 + "s";
+					container.appendChild(div);
+				}
+			}
+
+			function loadQuestion() {
+				if (wrongAnswers >= 3) {
+					alert("Liiga palju valesid vastuseid! Alustame uuesti.");
+					resetGame();
+					return;
+				}
+
+				if (currentIdx >= questions.length) {
+					showEndScreen();
+					return;
+				}
+
+				const q = questions[currentIdx];
+
+				// Uuenda taseme badge ja protsessi kaarti
+				const badge = document.getElementById("levelBadge");
+				if (q.level === 1) {
+					badge.innerText = "Tase: Algaja";
+					document.getElementById("step1").classList.add("active");
+				} else if (q.level === 2) {
+					badge.innerText = "Tase: Edasijõudnu";
+					badge.style.background = "#ffafbd";
+					document.getElementById("step2").classList.add("active");
+				} else {
+					badge.innerText = "Tase: Ekspert";
+					badge.style.background = "#b9fbc0";
+					document.getElementById("step3").classList.add("active");
+				}
+
+				document.getElementById("questionText").innerText = q.q;
+				const grid = document.getElementById("optionsGrid");
+				grid.innerHTML = "";
+				document.getElementById("explanationText").style.display = "none";
+				document.getElementById("confirmBtn").style.display = "block";
+				document.getElementById("nextBtn").style.display = "none";
+				selectedOption = null;
+
+				// Sega vastused
+				let opts = q.options.map((text, i) => ({ text, i }));
+				opts.sort(() => Math.random() - 0.5);
+
+				opts.forEach((opt) => {
+					const btn = document.createElement("button");
+					btn.className = "option-btn";
+					btn.innerText = opt.text;
+					btn.onclick = () => selectOption(btn, opt.i);
+					grid.appendChild(btn);
+				});
+			}
+
+			function selectOption(btn, idx) {
+				if (document.getElementById("nextBtn").style.display === "block")
+					return;
+
+				document
+					.querySelectorAll(".option-btn")
+					.forEach((b) => b.classList.remove("selected"));
+				btn.classList.add("selected");
+				selectedOption = idx;
+			}
+
+			function confirmAnswer() {
+				if (selectedOption === null) {
+					alert("Palun vali üks vastus!");
+					return;
+				}
+
+				const q = questions[currentIdx];
+				const btns = document.querySelectorAll(".option-btn");
+				let correctBtn, selectedBtn;
+
+				btns.forEach((btn) => {
+					// Leiame õige nupu ja valitud nupu, et neid värvida
+					// Meil on vaja teada algset indeksit. Kasutame teksti võrdlust või salvestame andmed.
+				});
+
+				const isCorrect = selectedOption === q.correct;
+
+				// Värvimine (lihtsustatud loogika nupu teksti järgi)
+				btns.forEach((btn) => {
+					if (q.options[q.correct] === btn.innerText)
+						btn.classList.add("correct");
+					if (
+						isCorrect === false &&
+						q.options[selectedOption] === btn.innerText
+					) {
+						btn.classList.add("wrong");
+					}
+				});
+
+				if (isCorrect) {
+					score++;
+				} else {
+					wrongAnswers++;
+				}
+
+				const expBox = document.getElementById("explanationText");
+				expBox.innerText = (isCorrect ? "Õige! " : "Vale! ") + q.exp;
+				expBox.style.display = "block";
+				expBox.style.borderLeft = isCorrect
+					? "5px solid #caffbf"
+					: "5px solid #ffadad";
+
+				document.getElementById("confirmBtn").style.display = "none";
+				document.getElementById("nextBtn").style.display = "block";
+				currentIdx++;
+			}
+
+			function showEndScreen() {
+				document.getElementById("game-area").style.display = "none";
+				document.getElementById("end-screen").style.display = "block";
+
+				const maxScore = questions.length;
+				const diff = maxScore - score;
+
+				document.getElementById("badgeArea").innerText = "🏆";
+				document.getElementById("endTitle").innerText =
+					"Veebiarenduse ekspert! 🚀";
+				document.getElementById(
+					"scoreSummary"
+				).innerHTML = `Sinu tulemus: <b>${score}/${maxScore}</b>.<br>${
+					diff > 0
+						? `Maksimumist jäi puudu ${diff} punkti.`
+						: "Täiuslik tulemus!"
+				}`;
+
+				// Märgendite sadu
+				for (let i = 0; i < 30; i++) {
+					const c = document.createElement("div");
+					c.className = "confetti";
+					c.innerText = Math.random() > 0.5 ? "<html>" : "{css}";
+					c.style.left = Math.random() * 100 + "%";
+					c.style.animationDelay = Math.random() * 2 + "s";
+					document.getElementById("end-screen").appendChild(c);
+				}
+			}
+
+			function resetGame() {
+				currentIdx = 0;
+				score = 0;
+				wrongAnswers = 0;
+				document
+					.querySelectorAll(".step")
+					.forEach((s) => s.classList.remove("active"));
+				document.getElementById("game-area").style.display = "flex";
+				document.getElementById("end-screen").style.display = "none";
+				loadQuestion();
+			}
+
+			init();
+		</script>
+	</body>
+</html>
