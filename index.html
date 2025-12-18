@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="et">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>HTML & CSS Meistriklass</title>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--bg-color: #f4f7f6;
+				--card-bg: #ffffff;
+				--primary: #8ac6d1; /* Pastelne sinine */
+				--secondary: #ffb7b2; /* Pastelne punane/roosa */
+				--accent: #b5ead7; /* Pastelne roheline */
+				--text-dark: #2d3436;
+				--text-light: #636e72;
+				--danger: #ff7675;
+				--success: #55efc4;
+			}
+
+			* {
+				box-sizing: border-box;
+				user-select: none;
+			}
+
+			body {
+				margin: 0;
+				font-family: "Poppins", sans-serif;
+				background-color: var(--bg-color);
+				color: var(--text-dark);
+				height: 100vh;
+				overflow: hidden;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			/* --- ANIMEERITUD TAUST --- */
+			.background-shapes {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				z-index: -1;
+				overflow: hidden;
+			}
+
+			.shape {
+				position: absolute;
+				color: rgba(0, 0, 0, 0.05);
+				font-weight: bold;
+				font-family: monospace;
+				animation: floatUp linear infinite;
+			}
+
+			@keyframes floatUp {
+				0% {
+					transform: translateY(110vh) rotate(0deg);
+					opacity: 0;
+				}
+				20% {
+					opacity: 1;
+				}
+				90% {
+					opacity: 1;
+				}
+				100% {
+					transform: translateY(-10vh) rotate(360deg);
+					opacity: 0;
+				}
+			}
+
+			/* --- PEAMINE KONTEINER --- */
+			.quiz-container {
+				width: 100%;
+				max-width: 420px;
+				height: 90vh;
+				background: var(--card-bg);
+				border-radius: 30px;
+				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+				display: flex;
+				flex-direction: column;
+				position: relative;
+				overflow: hidden;
+				border: 1px solid #eee;
+			}
+
+			/* --- PROTSESSI KAART (PROGRESS) --- */
+			.process-map {
+				display: flex;
+				justify-content: space-between;
+				padding: 20px 25px;
+				background: #fafafa;
+				border-bottom: 1px solid #f0f0f0;
+			}
+
+			.process-step {
+				font-size: 0.75rem;
+				color: #ccc;
+				text-transform: uppercase;
+				font-weight: 600;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				transition: all 0.5s ease;
+			}
+
+			.process-step.active {
+				color: var(--primary);
+				transform: scale(1.1);
+			}
+
+			.process-step i {
+				font-size: 1.2rem;
+				margin-bottom: 4px;
+				display: block;
+			}
+
+			/* --- MÄNGU ALA --- */
+			.game-area {
+				flex: 1;
+				padding: 20px;
+				overflow-y: auto;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.level-badge {
+				align-self: flex-start;
+				padding: 5px 12px;
+				border-radius: 15px;
+				font-size: 0.7rem;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+				margin-bottom: 15px;
+				background: var(--accent);
+				color: #333;
+			}
+
+			.lives-counter {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				font-size: 0.9rem;
+				color: var(--danger);
+			}
+
+			.question-text {
+				font-size: 1.2rem;
+				font-weight: 600;
+				margin-bottom: 25px;
+				line-height: 1.4;
+			}
+
+			/* --- VASTUSED --- */
+			.options-grid {
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+
+			.option-btn {
+				background: #f9f9f9;
+				border: 2px solid #eee;
+				padding: 15px;
+				border-radius: 12px;
+				text-align: left;
+				font-family: inherit;
+				font-size: 0.95rem;
+				cursor: pointer;
+				transition: all 0.2s;
+				position: relative;
+			}
+
+			.option-btn:hover {
+				border-color: var(--primary);
+				background: #f0fbff;
+			}
+
+			.option-btn.selected {
+				border-color: var(--primary);
+				background: var(--primary);
+				color: white;
+			}
+
+			.option-btn.correct {
+				border-color: var(--success);
+				background: var(--success);
+				color: #005a41;
+			}
+
+			.option-btn.wrong {
+				border-color: var(--danger);
+				background: var(--danger);
+				color: white;
+			}
+
+			/* --- SELGITUS --- */
+			.explanation {
+				margin-top: 20px;
+				padding: 15px;
+				background: #fff8e1;
+				border-left: 4px solid #ffc107;
+				border-radius: 4px;
+				font-size: 0.85rem;
+				line-height: 1.5;
+				display: none;
+				animation: fadeIn 0.4s;
+			}
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+					transform: translateY(10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			/* --- ACTION BAR (ALL) --- */
+			.action-bar {
+				padding: 20px;
+				background: white;
+				border-top: 1px solid #f0f0f0;
+				display: flex;
+				gap: 10px;
+			}
+
+			.btn {
+				flex: 1;
+				padding: 14px;
+				border: none;
+				border-radius: 12px;
+				font-weight: 600;
+				font-size: 1rem;
+				cursor: pointer;
+				transition: transform 0.1s;
+			}
+
+			.btn:active {
+				transform: scale(0.98);
+			}
+
+			.btn-cancel {
+				background: transparent;
+				color: var(--text-light);
+				flex: 0.4;
+				font-size: 0.9rem;
+			}
+
+			.btn-primary {
+				background: var(--primary);
+				color: white;
+				box-shadow: 0 4px 15px rgba(138, 198, 209, 0.4);
+			}
+
+			.btn-next {
+				background: var(--text-dark);
+				color: white;
+				display: none; /* Peidetud alguses */
+			}
+
+			/* --- END SCREEN --- */
+			#end-screen {
+				display: none;
+				text-align: center;
+				padding: 40px 20px;
+				height: 100%;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.badge-icon {
+				font-size: 5rem;
+				margin-bottom: 20px;
+				animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+			}
+
+			@keyframes popIn {
+				0% {
+					transform: scale(0);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			.tag-rain {
+				position: absolute;
+				font-size: 1.5rem;
+				top: -50px;
+				animation: fall linear forwards;
+			}
+
+			@keyframes fall {
+				to {
+					transform: translateY(100vh);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="background-shapes" id="bg-shapes"></div>
+
+		<div class="quiz-container">
+			<div class="process-map">
+				<div class="process-step" id="step-1"><i>📝</i> Visand</div>
+				<div class="process-step" id="step-2"><i>📐</i> Wireframe</div>
+				<div class="process-step" id="step-3"><i>📱</i> Prototüüp</div>
+			</div>
+
+			<div class="game-area" id="game-view">
+				<div style="display: flex; justify-content: space-between; width: 100%">
+					<div class="level-badge" id="level-indicator">Tase 1: Algaja</div>
+					<div class="lives-counter" id="lives-display">❤️❤️❤️</div>
+				</div>
+
+				<div class="question-text" id="question-text">
+					Küsimuse tekst laeb siia...
+				</div>
+
+				<div class="options-grid" id="options-container"></div>
+
+				<div class="explanation" id="explanation"></div>
+			</div>
+
+			<div id="end-screen">
+				<div class="badge-icon">🏆</div>
+				<h2 id="end-title">Veebiarenduse Ekspert!</h2>
+				<p id="end-score" style="color: var(--text-light); margin-bottom: 30px">
+					Tulemus...
+				</p>
+				<button class="btn btn-primary" onclick="restartGame()">
+					Alusta uuesti
+				</button>
+			</div>
+
+			<div class="action-bar" id="action-bar">
+				<button class="btn btn-cancel" onclick="confirmRestart()">
+					Katkesta
+				</button>
+				<button
+					class="btn btn-primary"
+					id="confirm-btn"
+					onclick="checkAnswer()"
+				>
+					Kinnita
+				</button>
+				<button class="btn btn-next" id="next-btn" onclick="nextQuestion()">
+					Edasi
+				</button>
+			</div>
+		</div>
+
+		<script>
+			// --- ANDMED ---
+			const questions = [
+				// TASE 1: ALGAJA (5 küsimust)
+				{
+					level: 1,
+					q: "Mida tähistab lühend HTML?",
+					options: [
+						"HyperText Markup Language",
+						"High Tech Modern Language",
+						"Hyperlink Text Management",
+						"Home Tool Markup Language",
+					],
+					correct: 0,
+					expl: "HTML (HyperText Markup Language) on standardne märgistuskeel veebilehtede struktuuri loomiseks.",
+				},
+				{
+					level: 1,
+					q: "Milline on korrektne viis CSS-is taustavärvi muutmiseks?",
+					options: [
+						"color: red;",
+						"background-color: red;",
+						"bg-color: red;",
+						"background: color-red;",
+					],
+					correct: 1,
+					expl: "'background-color' on spetsiifiline omadus tausta jaoks. 'color' muudab teksti värvi.",
+				},
+				{
+					level: 1,
+					q: "Milline HTML märgend on kõige suurema tähtsusega pealkiri?",
+					options: ["<h6>", "<head>", "<h1>", "<title>"],
+					correct: 2,
+					expl: "<h1> tähistab peamist pealkirja (Heading 1). Numbrid 1-6 näitavad hierarhiat, kus 1 on kõrgeim.",
+				},
+				{
+					level: 1,
+					q: "Mida teeb <a> märgend?",
+					options: [
+						"Loob uue artikli",
+						"Teeb teksti paksuks (Alert)",
+						"Loob hüperlingi (Anchor)",
+						"Joondab teksti",
+					],
+					correct: 2,
+					expl: "<a> tuleb sõnast 'Anchor' ja seda kasutatakse linkide loomiseks atribuudiga 'href'.",
+				},
+				{
+					level: 1,
+					q: "Kuidas suletakse korrektselt HTML lõigu (paragraph) märgend?",
+					options: ["<p/>", "</p>", "<end p>", "\\"],
+					correct: 1,
+					expl: "Sulgev märgend algab alati kaldkriipsuga (/) enne märgendi nime.",
+				},
+
+				// TASE 2: EDASIJÕUDNU (5 küsimust)
+				{
+					level: 2,
+					q: "Mis on peamine erinevus 'padding' ja 'margin' vahel?",
+					options: [
+						"Padding on elemendi sees, margin on väljaspool",
+						"Margin on elemendi sees, padding on väljaspool",
+						"Padding on ainult tekstile, margin piltidele",
+						"Neid kasutatakse ainult tabelites",
+					],
+					correct: 0,
+					expl: "Padding (sisevaru) on ruum sisu ja ääre vahel. Margin (välisvaru) on ruum elemendi äärest väljapoole.",
+				},
+				{
+					level: 2,
+					q: "Mida teeb CSS-is 'display: flex'?",
+					options: [
+						"Muudab elemendi painduvaks kummiks",
+						"Aktiveerib Flexbox paigutuse mudeli",
+						"Peidab elemendi ekraanilt",
+						"Joondab teksti automaatselt keskele",
+					],
+					correct: 1,
+					expl: "Flexbox on ühemõõtmeline paigutusmudel, mis aitab elemente ritta või tulpa paigutada ja joondada.",
+				},
+				{
+					level: 2,
+					q: "Kuidas valida CSS-is elementi ID järgi?",
+					options: [
+						".minuElement",
+						"#minuElement",
+						"id=minuElement",
+						"*minuElement",
+					],
+					correct: 1,
+					expl: "ID valimiseks kasutatakse trellimärki (#). Klassi valimiseks kasutatakse punkti (.).",
+				},
+				{
+					level: 2,
+					q: "Mis juhtub elemendiga, kui sellele määrata 'position: fixed'?",
+					options: [
+						"See jääb kerides oma kohale (vaateakna suhtes)",
+						"Seda ei saa enam muuta",
+						"See paigutub teiste elementide alla",
+						"See liigub alati lehe lõppu",
+					],
+					correct: 0,
+					expl: "Fixed positsioon eemaldab elemendi tavalisest voost ja kinnitab selle brauseri akna (viewport) külge.",
+				},
+				{
+					level: 2,
+					q: "Milline CSS ühik on suhteline vanem-elemendi kirjasuuruse suhtes?",
+					options: ["px", "em", "rem", "vh"],
+					correct: 1,
+					expl: "'em' on skaleeruv ühik, mis põhineb vanem-elemendi fondi suurusel. 'rem' põhineb juur-elemendil (html).",
+				},
+
+				// TASE 3: EKSPERT (5 küsimust)
+				{
+					level: 3,
+					q: "Mida tähendab CSS-is spetsiifilisus (specificity)?",
+					options: [
+						"Brauseri kiirus stiilide laadimisel",
+						"Reeglite kaalukus, mis määrab, milline stiil rakendub",
+						"CSS faili suurus baitides",
+						"Erivärvide kasutamine disainis",
+					],
+					correct: 1,
+					expl: "Kui samale elemendile on mitu vastuolulist reeglit, võidab see, mille valija on spetsiifilisem (nt ID > Klass > Element).",
+				},
+				{
+					level: 3,
+					q: "Mis on SASS/SCSS peamine eelis tavalise CSS-i ees?",
+					options: [
+						"See töötab ilma brauserita",
+						"Võimaldab kasutada muutujaid, pesastamist ja mixineid",
+						"See asendab HTML-i täielikult",
+						"See on ainus viis teha mobiilset disaini",
+					],
+					correct: 1,
+					expl: "SASS on CSS-i eelprotsessor, mis lisab programmeerimisloogikat (muutujad, funktsioonid), muutes koodi hallatavamaks.",
+				},
+				{
+					level: 3,
+					q: "Kuidas kirjutatakse meediapäring (Media Query) mobiilivaate jaoks (max-width 600px)?",
+					options: [
+						"@media screen (max-width: 600px)",
+						"@media (max-width: 600px)",
+						"media: mobile 600px",
+						"<media width=600>",
+					],
+					correct: 1,
+					expl: "Korrektne süntaks nõuab @media märksõna ja sulgudes tingimust.",
+				},
+				{
+					level: 3,
+					q: "Mis on 'Bootstrap' veebiarenduses?",
+					options: [
+						"Serveri käivitamise protokoll",
+						"Populaarne CSS-i ja JS-i raamistik (framework)",
+						"Programmeerimiskeel",
+						"Google'i otsingumootori algoritm",
+					],
+					correct: 1,
+					expl: "Bootstrap on tööriistakomplekt (raamistik), mis sisaldab valmis komponente ja grid-süsteemi kiireks arenduseks.",
+				},
+				{
+					level: 3,
+					q: "Mis on Grid-süsteemis 'fr' ühiku tähendus?",
+					options: [
+						"Fixed ratio (fikseeritud suhe)",
+						"Fractional unit (murdosa vaba ruumist)",
+						"Frame rate (kaadrisagedus)",
+						"Font resolution (fondi resolutsioon)",
+					],
+					correct: 1,
+					expl: "CSS Gridis tähistab 'fr' paindlikku ühikut, mis jagab järelejäänud vaba ruumi proportsionaalselt.",
+				},
+			];
+
+			// --- MÄNGU OLEK ---
+			let currentQuestionIndex = 0;
+			let score = 0;
+			let wrongAnswers = 0;
+			let selectedOptionIndex = null;
+			let gameActive = true;
+			const maxWrongAnswers = 3;
+
+			// --- INIT ---
+			function initGame() {
+				createBackgroundShapes();
+				loadQuestion();
+				updateLives();
+			}
+
+			// --- VISUAALID ---
+			function createBackgroundShapes() {
+				const container = document.getElementById("bg-shapes");
+				const symbols = [
+					"<div>",
+					"{ }",
+					"#",
+					"</>",
+					"CSS",
+					"HTML",
+					";",
+					".class",
+				];
+
+				for (let i = 0; i < 15; i++) {
+					const el = document.createElement("div");
+					el.className = "shape";
+					el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+					el.style.left = Math.random() * 100 + "%";
+					el.style.fontSize = Math.random() * 20 + 14 + "px";
+					el.style.animationDuration = Math.random() * 10 + 10 + "s";
+					el.style.animationDelay = Math.random() * 5 + "s";
+					container.appendChild(el);
+				}
+			}
+
+			function updateProgress(level) {
+				document
+					.querySelectorAll(".process-step")
+					.forEach((el) => el.classList.remove("active"));
+				document.getElementById(`step-${level}`).classList.add("active");
+
+				const badge = document.getElementById("level-indicator");
+				if (level === 1) {
+					badge.textContent = "Tase 1: Algaja";
+					badge.style.background = "#b5ead7"; // Roheline
+				} else if (level === 2) {
+					badge.textContent = "Tase 2: Edasijõudnu";
+					badge.style.background = "#ffeaa7"; // Kollane
+				} else {
+					badge.textContent = "Tase 3: Ekspert";
+					badge.style.background = "#ffb7b2"; // Punane
+				}
+			}
+
+			function updateLives() {
+				let hearts = "";
+				for (let i = 0; i < maxWrongAnswers - wrongAnswers; i++) {
+					hearts += "❤️";
+				}
+				document.getElementById("lives-display").textContent = hearts;
+			}
+
+			// --- LOOGIKA ---
+			function loadQuestion() {
+				if (currentQuestionIndex >= questions.length) {
+					endGame(true);
+					return;
+				}
+
+				const q = questions[currentQuestionIndex];
+
+				// Uuenda visuaale
+				updateProgress(q.level);
+
+				document.getElementById("question-text").textContent = q.q;
+				document.getElementById("explanation").style.display = "none";
+				document.getElementById("explanation").className = "explanation"; // reset class
+
+				// Nupud
+				document.getElementById("confirm-btn").style.display = "block";
+				document.getElementById("next-btn").style.display = "none";
+
+				const container = document.getElementById("options-container");
+				container.innerHTML = "";
+
+				// Sega vastused, aga hoia meeles, milline oli õige
+				// Loome objektid {text: "...", originalIndex: 0}
+				let optionsWithIndex = q.options.map((opt, idx) => ({
+					text: opt,
+					originalIndex: idx,
+				}));
+
+				// Shuffle (Fisher-Yates)
+				for (let i = optionsWithIndex.length - 1; i > 0; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[optionsWithIndex[i], optionsWithIndex[j]] = [
+						optionsWithIndex[j],
+						optionsWithIndex[i],
+					];
+				}
+
+				optionsWithIndex.forEach((optObj, visualIndex) => {
+					const btn = document.createElement("button");
+					btn.className = "option-btn";
+					btn.textContent = optObj.text;
+					btn.onclick = () => selectOption(visualIndex, optObj.originalIndex);
+					btn.dataset.originalIndex = optObj.originalIndex; // Salvesta viide
+					container.appendChild(btn);
+				});
+
+				selectedOptionIndex = null;
+			}
+
+			function selectOption(visualIndex, originalIndex) {
+				// Eemalda eelmine valik
+				const buttons = document.querySelectorAll(".option-btn");
+				buttons.forEach((b) => b.classList.remove("selected"));
+
+				// Lisa uus
+				buttons[visualIndex].classList.add("selected");
+				selectedOptionIndex = originalIndex; // See on indeksi väärtus algses massiivis (0-3)
+			}
+
+			function checkAnswer() {
+				if (selectedOptionIndex === null) return; // Midagi pole valitud
+
+				const q = questions[currentQuestionIndex];
+				const isCorrect = selectedOptionIndex === q.correct;
+				const buttons = document.querySelectorAll(".option-btn");
+				const expl = document.getElementById("explanation");
+
+				// Visuaalne tagasiside nuppudel
+				buttons.forEach((btn) => {
+					const idx = parseInt(btn.dataset.originalIndex);
+					if (idx === q.correct) {
+						btn.classList.add("correct"); // Näita alati õiget
+					}
+					if (idx === selectedOptionIndex && !isCorrect) {
+						btn.classList.add("wrong"); // Näita valet, kui kasutaja valis selle
+					}
+					btn.style.pointerEvents = "none"; // Lukusta nupud
+				});
+
+				// Skoor ja elud
+				if (isCorrect) {
+					score++;
+					expl.innerHTML = `<strong>Õige!</strong> ${q.expl}`;
+					expl.style.borderLeftColor = "#55efc4";
+				} else {
+					wrongAnswers++;
+					updateLives();
+					expl.innerHTML = `<strong>Vale!</strong> ${q.expl}`;
+					expl.style.borderLeftColor = "#ff7675";
+				}
+
+				expl.style.display = "block";
+
+				// Kontrolli kas mäng läbi (elud otsas)
+				if (wrongAnswers >= maxWrongAnswers) {
+					setTimeout(() => endGame(false), 2000);
+				} else {
+					document.getElementById("confirm-btn").style.display = "none";
+					document.getElementById("next-btn").style.display = "block";
+				}
+			}
+
+			function nextQuestion() {
+				currentQuestionIndex++;
+				loadQuestion();
+			}
+
+			function endGame(success) {
+				document.getElementById("game-view").style.display = "none";
+				document.getElementById("action-bar").style.display = "none";
+				const endScreen = document.getElementById("end-screen");
+				endScreen.style.display = "flex";
+
+				if (success) {
+					document.getElementById("end-title").textContent =
+						"Veebiarenduse Ekspert! 🚀";
+					const diff = questions.length - score;
+					let msg = `Sinu tulemus: <b>${score} / ${questions.length}</b>.`;
+					if (diff === 0) msg += "<br>Suurepärane, täiuslik skoor!";
+					else msg += `<br>Maksimumist jäi puudu ${diff} punkti.`;
+
+					document.getElementById("end-score").innerHTML = msg;
+					createConfetti();
+				} else {
+					document.querySelector(".badge-icon").textContent = "😢";
+					document.getElementById("end-title").textContent = "Proovi uuesti!";
+					document.getElementById("end-score").innerHTML =
+						"Vastasid valesti 3 korda.<br>Ära heida meelt, harjutamine teeb meistriks!";
+				}
+			}
+
+			function createConfetti() {
+				const colors = ["#8ac6d1", "#ffb7b2", "#b5ead7", "#ffeaa7"];
+				const shapes = ["HTML", "CSS", "{ }", "</>", "★"];
+
+				for (let i = 0; i < 30; i++) {
+					const el = document.createElement("div");
+					el.className = "tag-rain";
+					el.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+					el.style.left = Math.random() * 100 + "%";
+					el.style.color = colors[Math.floor(Math.random() * colors.length)];
+					el.style.animationDuration = Math.random() * 2 + 2 + "s";
+					el.style.fontSize = Math.random() * 20 + 20 + "px";
+					document.getElementById("end-screen").appendChild(el);
+				}
+			}
+
+			function restartGame() {
+				currentQuestionIndex = 0;
+				score = 0;
+				wrongAnswers = 0;
+				selectedOptionIndex = null;
+
+				// Puhasta confetti
+				document.querySelectorAll(".tag-rain").forEach((e) => e.remove());
+
+				document.getElementById("end-screen").style.display = "none";
+				document.getElementById("game-view").style.display = "flex";
+				document.getElementById("action-bar").style.display = "flex";
+				document.querySelector(".badge-icon").textContent = "🏆";
+
+				initGame();
+			}
+
+			function confirmRestart() {
+				if (confirm("Oled kindel, et soovid katkestada ja alustada otsast?")) {
+					restartGame();
+				}
+			}
+
+			// Käivita
+			initGame();
+		</script>
+	</body>
+</html>
